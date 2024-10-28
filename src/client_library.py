@@ -11,6 +11,8 @@ from src.server import get_video
 
 logger = structlog.getLogger(__name__)
 
+MAX_RETRY = 3
+
 
 def estimate_translation_time(video_length_seconds) -> float:
     base_time = 3
@@ -24,7 +26,6 @@ class VideoTranslationClient:
         video_length_seconds: int,
         retry_strategy_idx: int,
     ):
-        self.max_retries = 3
         self.retry_strategy_idx = retry_strategy_idx
         self.video_length_seconds = video_length_seconds
 
@@ -80,7 +81,7 @@ class VideoTranslationClient:
                 if 400 <= e.status_code < 500:
                     raise
 
-                if attempt > self.max_retries:
+                if attempt > MAX_RETRY:
                     raise
 
                 delay = max(
@@ -93,7 +94,7 @@ class VideoTranslationClient:
                 attempt += 1
 
             except Exception as e:
-                if attempt > self.max_retries:
+                if attempt > MAX_RETRY:
                     raise
 
                 delay = self._calculate_delay(self.retry_strategy_idx, elapsed_time)
