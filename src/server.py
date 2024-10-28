@@ -2,7 +2,7 @@ import structlog
 from fastapi import FastAPI, HTTPException
 from typing import Optional
 
-from endpoint import endpoint_simulate
+from src.endpoint import endpoint_simulate
 
 
 app = FastAPI()
