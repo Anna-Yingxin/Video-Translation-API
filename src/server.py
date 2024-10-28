@@ -11,7 +11,7 @@ logger = structlog.getLogger(__name__)
 
 
 @app.get("/check_status/{file_id}")
-async def get_video(file_id: str, video_length_seconds: Optional[float]):
+async def get_video(file_id: str, video_length_seconds: float):
     try:
         logger.info("Received video translation input", file_id=file_id)
 

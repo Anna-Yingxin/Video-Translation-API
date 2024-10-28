@@ -21,17 +21,16 @@ def estimate_translation_time(video_length_seconds) -> float:
 class VideoTranslationClient:
     def __init__(
         self,
-        video_length_seconds: Optional[int],
+        video_length_seconds:int,
         retry_strategy_idx: int,
     ):
         self.max_retries = 3
         self.retry_strategy_idx = retry_strategy_idx
         self.video_length_seconds = video_length_seconds
 
-        if self.video_length_seconds:
-            self.delay_strategies = DelayStrategies(
-                estimate_translation_time(self.video_length_seconds),
-            )
+        self.delay_strategies = DelayStrategies(
+            estimate_translation_time(self.video_length_seconds),
+        )
 
     def _calculate_delay(self, user_input: int, elapsed_time: float) -> float:
         if user_input == 0:
