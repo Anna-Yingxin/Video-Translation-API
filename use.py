@@ -20,7 +20,9 @@ async def get_user_input() -> Tuple[str, int, int]:
 
     # Get video length
     while True:
-        video_length = input("\n🥝 Enter video length in hours (e.g., 1.5 for 1.5 hours): ").strip()
+        video_length = input(
+            "\n🥝 Enter video length in hours (e.g., 1.5 for 1.5 hours): "
+        ).strip()
 
         try:
             hours = float(video_length)
@@ -46,13 +48,17 @@ async def get_user_input() -> Tuple[str, int, int]:
 
     while True:
         try:
-            retry_strategy = input("\nPlease select a polling strategy by entering 0, 1, or 2: ").strip()
+            retry_strategy = input(
+                "\nPlease select a polling strategy by entering 0, 1, or 2: "
+            ).strip()
             retry_strategy_idx = int(retry_strategy)
             if retry_strategy_idx in retry_strategies:
                 print(f"You selected: {retry_strategies[retry_strategy_idx]}")
                 break
             else:
-                print(f"⚠️ Invalid choice. Enter a number between 0 and {len(retry_strategies) - 1}.")
+                print(
+                    f"⚠️ Invalid choice. Enter a number between 0 and {len(retry_strategies) - 1}."
+                )
         except ValueError:
             print("⚠️ Invalid input. Please enter a number (0, 1, or 2).")
 

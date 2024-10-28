@@ -21,7 +21,7 @@ def estimate_translation_time(video_length_seconds) -> float:
 class VideoTranslationClient:
     def __init__(
         self,
-        video_length_seconds:int,
+        video_length_seconds: int,
         retry_strategy_idx: int,
     ):
         self.max_retries = 3
