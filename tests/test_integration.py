@@ -1,12 +1,8 @@
 import pytest
-import time
 import requests
-from unittest.mock import patch
-from fastapi import HTTPException
+import time
 from src.client_library import VideoTranslationClient
 from src.adaptive_delay import DelayStrategies
-
-TIMEOUT_SEC = 0
 
 
 @pytest.fixture
@@ -98,6 +94,18 @@ def test_status_completed_adaptive_delay(client_adaptive_delay):
         assert abs(delay - expected_delay) < 0.2
         elapsed_time += delay
 
-    assert (
-        status == "completed"
-    ), "Job should eventually reach 'completed' status with adaptive delay"
+    assert status == "completed"
+
+
+def test_http_error_handling(client_fixed_delay):
+    file_id = "test_file_error"
+    invalid_length = 3.0
+
+    response = requests.get(
+        f"{client_fixed_delay.server_url}/check_status/{file_id}",
+        params={"video_length_hour": invalid_length},
+    )
+    with pytest.raises(requests.HTTPError) as exc_info:
+        response.raise_for_status()
+
+    assert exc_info.value.response.status_code == 413
