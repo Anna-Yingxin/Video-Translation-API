@@ -22,12 +22,14 @@ pip install -r requirements.txt
 ```
 
 ## Example Usage
-
+Set the server URL and run the script:
+```console
+export SERVER_URL="http://your.url:8000"
+python use.py
+```
 Below is an example of translating a video using the fixed delay polling strategy:
 
 ```
-$ python use.py
-
 # User Input
 Enter the job ID: 1
 Enter video length in hours (e.g., 1.5 for 1.5 hours): 2
@@ -43,11 +45,11 @@ You selected: Fixed delay (waits 4 seconds between each poll)
 
 # Processing Output
 Initiating video translation process...
-2024-10-28 13:52:03 [info    ] Received video translation input file_id=1
-2024-10-28 13:52:03 [info    ] File status retrieved        file_id=1 status=pending
-2024-10-28 13:52:03 [info    ] Waiting before next poll    delay=3.76
+2024-10-28 20:59:17 [info     ] Waiting before next poll. Need to wait 10.82 seconds until the next poll.
+2024-10-28 20:59:28 [info     ] Waiting before next poll. Need to wait 1.88 seconds until the next poll.
+2024-10-28 20:59:30 [info     ] Waiting before next poll. Need to wait 2.05 seconds until the next poll.
 ... [processing continues]
-2024-10-28 13:52:43 [info    ] File status retrieved        file_id=1 status=completed
+2024-10-28 20:59:43 [info    ] File status retrieved        file_id=1 status=completed
 
 # Result
 ✨ Translation completed successfully! ✨
