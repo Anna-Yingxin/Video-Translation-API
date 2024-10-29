@@ -8,7 +8,7 @@ from typing import Tuple
 video_tracker = {}
 
 
-def endpoint_simulate(file_id, video_length_hour) -> Tuple[str, str]:
+def simulate_endpoint(file_id, video_length_hour) -> Tuple[str, str]:
     if file_id not in video_tracker:
         video_tracker[file_id] = {
             "start_time": datetime.now(),

@@ -2,7 +2,7 @@ import structlog
 from fastapi import FastAPI, HTTPException
 import requests
 
-from src.endpoint import endpoint_simulate
+from src.endpoint import simulate_endpoint
 
 app = FastAPI()
 
@@ -19,7 +19,7 @@ def get_video(file_id: str, video_length_hour: float):
         )
 
     try:
-        file_id, status = endpoint_simulate(file_id, video_length_hour)
+        file_id, status = simulate_endpoint(file_id, video_length_hour)
         logger.info("File status retrieved", file_id=file_id, status=status)
         return {"file_id": file_id, "status": status}
 
