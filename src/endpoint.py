@@ -8,27 +8,27 @@ from typing import Tuple
 video_tracker = {}
 
 
-def endpoint_simulate(file_id, video_length_seconds) -> Tuple[str, str]:
+def endpoint_simulate(file_id, video_length_hour) -> Tuple[str, str]:
     if file_id not in video_tracker:
         video_tracker[file_id] = {
             "start_time": datetime.now(),
-            "length": video_length_seconds,
+            "length": video_length_hour,
         }
 
     elapsed_time = (
         datetime.now() - video_tracker[file_id]["start_time"]
     ).total_seconds()
 
-    if video_length_seconds <= 0.3:
+    if video_length_hour <= 0.3:
         completion_time = 3
         error_rate = 0
-    elif video_length_seconds <= 0.5:
+    elif video_length_hour <= 0.5:
         completion_time = 10
-        error_rate = 0.05
-    elif video_length_seconds <= 1:
-        completion_time = 16
         error_rate = 0.01
-    elif video_length_seconds <= 1.5:
+    elif video_length_hour <= 1:
+        completion_time = 16
+        error_rate = 0.02
+    elif video_length_hour <= 1.5:
         completion_time = 20
         error_rate = 0.02
     else:

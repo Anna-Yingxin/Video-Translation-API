@@ -1,36 +1,39 @@
-import asyncio
 import time
 import random
-from typing import Optional, Callable, Dict, Any
+import requests
+import os
+from typing import Dict, Any
 
-from fastapi import HTTPException
 import structlog
 
 from src.adaptive_delay import DelayStrategies
-from src.server import get_video
+
 
 logger = structlog.getLogger(__name__)
 
 MAX_RETRY = 3
+TIMEOUT_SEC = 300
 
 
-def estimate_translation_time(video_length_seconds) -> float:
-    base_time = 3
-    processing_factor = 0.5
-    return base_time + (video_length_seconds * processing_factor)
+def estimate_translation_time_sec(video_length_hour) -> float:
+    base_time_sec = 3
+    processing_factor = 0.6
+    return base_time_sec + (video_length_hour * processing_factor)
 
 
 class VideoTranslationClient:
     def __init__(
         self,
-        video_length_seconds: int,
+        video_length_hour: float,
         retry_strategy_idx: int,
     ):
+        self.server_url = os.getenv("SERVER_URL", "http://127.0.0.1:8000")
+
         self.retry_strategy_idx = retry_strategy_idx
-        self.video_length_seconds = video_length_seconds
+        self.video_length_hour = video_length_hour
 
         self.delay_strategies = DelayStrategies(
-            estimate_translation_time(self.video_length_seconds),
+            estimate_translation_time_sec(self.video_length_hour),
         )
 
     def _calculate_delay(self, user_input: int, elapsed_time: float) -> float:
@@ -44,64 +47,64 @@ class VideoTranslationClient:
         delay *= 0.9 + random.random() * 0.2
         return delay
 
-    async def wait_for_completion(
+    def wait_for_completion(
         self,
         file_id: str,
-        callback: Optional[Callable[[Dict[str, Any]], None]] = None,
-        timeout: Optional[float] = None,
     ) -> Dict[str, Any]:
         start_time = time.time()
         attempt = 1
+        time.sleep(1)
 
         while True:
-            elapsed_time = time.time() - start_time
+            elapsed_time_sec = time.time() - start_time
 
-            if timeout and elapsed_time > timeout:
+            if elapsed_time_sec > TIMEOUT_SEC:
                 raise TimeoutError(
-                    f"Job {file_id} did not complete within {timeout} seconds"
+                    f"Job {file_id} did not complete within {TIMEOUT_SEC} seconds"
                 )
 
             try:
-                if self.video_length_seconds:
-                    data = await get_video(file_id, self.video_length_seconds)
-                else:
-                    data = await get_video(file_id)
-
-                if callback:
-                    callback(data)
+                response = requests.get(
+                    f"{self.server_url}/check_status/{file_id}",
+                    params={"video_length_hour": self.video_length_hour},
+                )
+                response.raise_for_status()
+                data = response.json()
 
                 if data["status"] == "completed":
                     return data
 
-                delay = self._calculate_delay(self.retry_strategy_idx, elapsed_time)
-                logger.info("Waiting before next poll", delay=f"{delay:.2f}")
-                await asyncio.sleep(delay)
-
-            except HTTPException as e:
-                if 400 <= e.status_code < 500:
-                    raise
+            except Exception as e:
+                if isinstance(e, requests.HTTPError):
+                    status_code = e.response.status_code
+                    if 400 <= status_code < 500:
+                        logger.error(
+                            "Client error occurred",
+                            status_code=status_code,
+                            error=e.response.text,
+                            file_id=file_id,
+                        )
+                        raise
+                    else:
+                        error_message = e.response.text
+                else:
+                    error_message = str(e)
 
                 if attempt > MAX_RETRY:
+                    logger.error(
+                        "Max retries reached", error=error_message, file_id=file_id
+                    )
                     raise
 
                 delay = max(
-                    self._calculate_delay(self.retry_strategy_idx, elapsed_time), 5
+                    self._calculate_delay(self.retry_strategy_idx, elapsed_time_sec), 5
                 )
                 logger.warning(
-                    "Retrying after error", error=str(e), delay=f"{delay:.2f}"
+                    "Error occurred, retrying",
+                    error_message=error_message,
+                    attempt=attempt,
+                    next_delay_time=f"{delay:.2f}",
+                    file_id=file_id,
                 )
-                await asyncio.sleep(delay)
-                attempt += 1
-
-            except Exception as e:
-                if attempt > MAX_RETRY:
-                    raise
-
-                delay = self._calculate_delay(self.retry_strategy_idx, elapsed_time)
-                logger.warning(
-                    "Retrying after unexpected error",
-                    error=str(e),
-                    delay=f"{delay:.2f}",
-                )
-                await asyncio.sleep(delay)
+                time.sleep(delay)
                 attempt += 1

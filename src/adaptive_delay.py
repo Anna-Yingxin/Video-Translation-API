@@ -1,21 +1,22 @@
-MIN_DELAY_SEC = 2
-MAX_DELAY_SEC = 10
+MIN_DELAY_SEC = 2.0
+MAX_DELAY_SEC = 10.0
 
 # Percentage thresholds
 EARLY_PHASE_END = 70.0
 MID_PHASE_END = 90.0
 
+
 class DelayStrategies:
     def __init__(
         self,
-        estimated_translation_time,
+        estimate_translation_time_sec,
     ):
-        self.estimated_translation_time = estimated_translation_time
+        self.estimate_translation_time_sec = estimate_translation_time_sec
 
-    def adaptive_delay(self, elapsed_time: float) -> float:
-        estimated_time = self.estimated_translation_time
-
-        progress = min(100.0, (elapsed_time / estimated_time) * 100)
+    def adaptive_delay(self, elapsed_time_sec: float) -> float:
+        progress = min(
+            100.0, (elapsed_time_sec / self.estimate_translation_time_sec) * 100
+        )
 
         if progress < EARLY_PHASE_END:
             delay = MAX_DELAY_SEC * (1 - progress / EARLY_PHASE_END)
@@ -29,8 +30,8 @@ class DelayStrategies:
 
         return max(MIN_DELAY_SEC, min(delay, MAX_DELAY_SEC))
 
-    def exponential_backoff_delay(self, elapsed_time: float) -> float:
-        return min(MIN_DELAY_SEC * (2 ** (elapsed_time - 1)), MAX_DELAY_SEC)
+    def exponential_backoff_delay(self, elapsed_time_sec: int) -> float:
+        return min(MIN_DELAY_SEC * (2 ** (elapsed_time_sec - 1)), MAX_DELAY_SEC)
 
     def fixed_delay(self) -> float:
         return (MIN_DELAY_SEC + MAX_DELAY_SEC) / 3
